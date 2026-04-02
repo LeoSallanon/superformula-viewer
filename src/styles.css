@@ -354,6 +354,63 @@ body,
   color: var(--text-dim);
 }
 
+.slider.compact {
+  padding: 10px 12px 8px;
+  border-radius: 14px;
+}
+
+.slider.compact .slider-head {
+  letter-spacing: 0.12em;
+  font-size: 10px;
+}
+
+.compact-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: var(--text-main);
+  letter-spacing: normal;
+}
+
+.mobile-layout {
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+
+.mobile-header {
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(248, 241, 229, 0.03), rgba(248, 241, 229, 0.014));
+  padding: 10px 12px;
+}
+
+.mobile-header p {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  font-size: 8px;
+  color: var(--text-dim);
+}
+
+.mobile-header h1 {
+  margin: 6px 0 0;
+  font-size: clamp(1.3rem, 9vw, 2rem);
+  line-height: 0.94;
+  letter-spacing: 0.02em;
+  font-weight: 400;
+  font-family: 'Didot', 'Bodoni MT', 'Iowan Old Style', 'Baskerville', 'Times New Roman', serif;
+}
+
+.mobile-controls {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
 .utility-panel {
   border-radius: 16px;
   border: 1px solid rgba(247, 238, 223, 0.08);
@@ -418,5 +475,70 @@ body,
   .description {
     font-size: 13px;
     line-height: 1.5;
+  }
+}
+
+@media (max-width: 1200px) {
+  .controls-card {
+    grid-template-columns: minmax(0, 1fr) 238px;
+  }
+
+  .main-controls {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 900px) {
+  html,
+  body,
+  #root {
+    overflow: auto;
+  }
+
+  .app-shell {
+    height: auto;
+    max-height: none;
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 520px;
+    padding: 10px;
+    display: block;
+    overflow: visible;
+  }
+
+  .preview-card {
+    border-radius: 18px;
+    min-height: min(56vh, 420px);
+  }
+
+  .preview-card svg {
+    padding: 20px;
+  }
+
+  .overlay-values {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+  }
+
+  .slider.compact .slider-track-wrap {
+    margin-top: 6px;
+    padding: 10px 0;
+  }
+
+  .slider.compact .slider-range-input {
+    height: 30px;
+  }
+
+  .slider.compact .slider-range-input::-webkit-slider-thumb {
+    width: 16px;
+    height: 16px;
+    margin-top: -7px;
+    box-shadow: 0 0 0 10px rgba(239, 230, 214, 0.075);
+  }
+
+  .slider.compact .slider-range-input::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    box-shadow: 0 0 0 10px rgba(239, 230, 214, 0.075);
   }
 }
