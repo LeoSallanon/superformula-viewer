@@ -4,8 +4,40 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Superformula Viewer</title>
+    <style>
+      #gh-pages-hint {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #0a0a0a;
+        color: #ece8de;
+        font-family: Inter, system-ui, sans-serif;
+      }
+      #gh-pages-hint article {
+        max-width: 760px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 14px;
+        padding: 18px 20px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+      #gh-pages-hint h2 { margin: 0 0 10px; }
+      #gh-pages-hint p { margin: 8px 0; line-height: 1.5; color: #c5c0b4; }
+      #gh-pages-hint code { color: #fff; }
+    </style>
   </head>
   <body>
+    <div id="gh-pages-hint">
+      <article>
+        <h2>Superformula Viewer</h2>
+        <p>If you can read this message on GitHub Pages, the app bundle was not loaded.</p>
+        <p>
+          Fix: in <strong>Settings → Pages</strong>, set <strong>Source = GitHub Actions</strong>
+          (do not use <code>Deploy from a branch</code> for this Vite + TypeScript source tree).
+        </p>
+      </article>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
