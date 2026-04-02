@@ -108,6 +108,7 @@ function Slider({ label, value, min, max, step = 0.1, onChange, subdued = false 
       </label>
       <div className="slider-track-wrap">
         <input
+          className="slider-range-input"
           type="range"
           min={min}
           max={max}
