@@ -41,10 +41,11 @@ type SliderProps = {
   step?: number;
   onChange: (value: number) => void;
   subdued?: boolean;
+  compact?: boolean;
 };
 
-function Slider({ label, value, min, max, step = 0.1, onChange, subdued = false }: SliderProps) {
-  const className = subdued ? 'slider shell subdued' : 'slider shell';
+function Slider({ label, value, min, max, step = 0.1, onChange, subdued = false, compact = false }: SliderProps) {
+  const className = `${subdued ? 'slider shell subdued' : 'slider shell'}${compact ? ' compact' : ''}`;
   const [draftValue, setDraftValue] = useState(formatEditableNumber(value));
 
   useEffect(() => {
@@ -67,44 +68,48 @@ function Slider({ label, value, min, max, step = 0.1, onChange, subdued = false 
     <div className={className}>
       <label className="slider-head" htmlFor={label}>
         <span>{label}</span>
-        <div className="numeric-control">
-          <button
-            type="button"
-            aria-label={`Diminuer ${label}`}
-            onClick={() => {
-              const next = clamp(value - step, min, max);
-              onChange(next);
-              setDraftValue(formatEditableNumber(next));
-            }}
-          >
-            −
-          </button>
-          <input
-            id={label}
-            type="text"
-            inputMode="decimal"
-            value={draftValue}
-            aria-label={`Valeur de ${label}`}
-            onChange={(event) => setDraftValue(event.target.value)}
-            onBlur={commitDraft}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                commitDraft();
-              }
-            }}
-          />
-          <button
-            type="button"
-            aria-label={`Augmenter ${label}`}
-            onClick={() => {
-              const next = clamp(value + step, min, max);
-              onChange(next);
-              setDraftValue(formatEditableNumber(next));
-            }}
-          >
-            +
-          </button>
-        </div>
+        {compact ? (
+          <strong className="compact-value">{formatNumber(value)}</strong>
+        ) : (
+          <div className="numeric-control">
+            <button
+              type="button"
+              aria-label={`Diminuer ${label}`}
+              onClick={() => {
+                const next = clamp(value - step, min, max);
+                onChange(next);
+                setDraftValue(formatEditableNumber(next));
+              }}
+            >
+              −
+            </button>
+            <input
+              id={label}
+              type="text"
+              inputMode="decimal"
+              value={draftValue}
+              aria-label={`Valeur de ${label}`}
+              onChange={(event) => setDraftValue(event.target.value)}
+              onBlur={commitDraft}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  commitDraft();
+                }
+              }}
+            />
+            <button
+              type="button"
+              aria-label={`Augmenter ${label}`}
+              onClick={() => {
+                const next = clamp(value + step, min, max);
+                onChange(next);
+                setDraftValue(formatEditableNumber(next));
+              }}
+            >
+              +
+            </button>
+          </div>
+        )}
       </label>
       <div className="slider-track-wrap">
         <input
@@ -121,12 +126,33 @@ function Slider({ label, value, min, max, step = 0.1, onChange, subdued = false 
           }}
         />
       </div>
-      <div className="slider-range">
-        <span>{min}</span>
-        <span>{max}</span>
-      </div>
+      {!compact ? (
+        <div className="slider-range">
+          <span>{min}</span>
+          <span>{max}</span>
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function useMediaQuery(query: string) {
+  const [matches, setMatches] = useState(() => (typeof window !== 'undefined' ? window.matchMedia(query).matches : false));
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const media = window.matchMedia(query);
+    const listener = (event: MediaQueryListEvent) => setMatches(event.matches);
+    setMatches(media.matches);
+    media.addEventListener('change', listener);
+
+    return () => media.removeEventListener('change', listener);
+  }, [query]);
+
+  return matches;
 }
 
 export default function App() {
@@ -136,6 +162,7 @@ export default function App() {
   const [n3, setN3] = useState(15);
   const [showVectorField, setShowVectorField] = useState(false);
   const [fieldAngle, setFieldAngle] = useState(0);
+  const isMobileLayout = useMediaQuery('(max-width: 900px)');
 
   const width = 760;
   const height = 760;
@@ -238,115 +265,136 @@ export default function App() {
     return segments;
   }, [cx, cy, fieldAngle, m, n1, n2, n3, scale, showVectorField]);
 
+  const preview = (
+    <article className="preview-card">
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Aperçu de la superformule">
+        {ringGuides.map((r) => (
+          <circle key={`ring-${r}`} cx={cx} cy={cy} r={r} fill="none" stroke="rgba(231,225,214,0.08)" strokeWidth="1" />
+        ))}
+
+        {radialGuides.map((guide) => (
+          <line key={guide.key} x1={cx} y1={cy} x2={guide.x} y2={guide.y} stroke="rgba(231,225,214,0.08)" strokeWidth="1" />
+        ))}
+
+        {vectorSegments.map((segment, index) => (
+          <line
+            key={`vector-${index}-${segment.opacity.toFixed(3)}`}
+            x1={segment.x1}
+            y1={segment.y1}
+            x2={segment.x2}
+            y2={segment.y2}
+            stroke={`rgba(231,225,214,${segment.opacity})`}
+            strokeWidth="1.1"
+            strokeLinecap="round"
+          />
+        ))}
+
+        <circle cx={cx} cy={cy} r="2.5" fill="rgba(231,225,214,0.55)" />
+        <path d={pathData} fill="rgba(231,225,214,0.035)" stroke="#e7e1d6" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
+      </svg>
+
+      {!isMobileLayout ? <span className="overlay-label">Aperçu 2D</span> : null}
+      <span className="overlay-values">
+        ({formatNumber(m)}, {formatNumber(n1)}, {formatNumber(n2)}, {formatNumber(n3)})
+      </span>
+      {showVectorField && !isMobileLayout ? <span className="overlay-state">Champ vectoriel · {Math.round(fieldAngle)}°</span> : null}
+    </article>
+  );
+
   return (
     <main className="app-shell">
-      <section className="top-grid">
-        <article className="preview-card">
-          <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Aperçu de la superformule">
-            {ringGuides.map((r) => (
-              <circle key={`ring-${r}`} cx={cx} cy={cy} r={r} fill="none" stroke="rgba(231,225,214,0.08)" strokeWidth="1" />
-            ))}
+      {isMobileLayout ? (
+        <section className="mobile-layout">
+          <header className="mobile-header">
+            <p>Géométrie générative</p>
+            <h1>Visualiseur de superformule</h1>
+          </header>
+          {preview}
+          <section className="mobile-controls">
+            <Slider label="m" value={m} min={0} max={20} step={0.1} onChange={setM} compact />
+            <Slider label="n1" value={n1} min={0} max={80} step={0.1} onChange={setN1} compact />
+            <Slider label="n2" value={n2} min={0} max={80} step={0.1} onChange={setN2} compact />
+            <Slider label="n3" value={n3} min={0} max={80} step={0.1} onChange={setN3} compact />
+          </section>
+        </section>
+      ) : (
+        <>
+          <section className="top-grid">
+            {preview}
+            <article className="copy-card">
+              <p className="eyebrow">Géométrie générative</p>
+              <h1>Visualiseur de superformule</h1>
+              <div className="description">
+                <p>
+                  La superformule est une équation paramétrique capable de générer, à partir d’un petit nombre de
+                  variables, une très grande diversité de contours : cercles, polygones adoucis, étoiles, pétales,
+                  formes organiques ou silhouettes plus tendues. En jouant sur la fréquence, la courbure et les
+                  facteurs sinus/cosinus, on fait apparaître des familles de formes qui évoluent de manière continue
+                  d’un motif à l’autre.
+                </p>
+                <p>
+                  J’ai conçu ce viewer pour explorer librement ces variations et repérer plus facilement les motifs de
+                  superformule qui me semblent les plus intéressants. Mon objectif est ensuite d’utiliser ces formes
+                  pour influencer des champs vectoriels, tester des comportements graphiques, et développer de nouveaux
+                  systèmes génératifs. Plus d’informations sur la superformule :{' '}
+                  <a href="https://en.wikipedia.org/wiki/Superformula" target="_blank" rel="noreferrer">
+                    Wikipédia
+                  </a>
+                  .
+                </p>
+              </div>
+              <div className="stats-grid">
+                <div>
+                  <span>Fréquence</span>
+                  <strong>{formatNumber(m)}</strong>
+                </div>
+                <div>
+                  <span>Courbure</span>
+                  <strong>{formatNumber(n1)}</strong>
+                </div>
+                <div>
+                  <span>Facteur sinus</span>
+                  <strong>{formatNumber(n2)}</strong>
+                </div>
+                <div>
+                  <span>Facteur cosinus</span>
+                  <strong>{formatNumber(n3)}</strong>
+                </div>
+              </div>
+            </article>
+          </section>
 
-            {radialGuides.map((guide) => (
-              <line key={guide.key} x1={cx} y1={cy} x2={guide.x} y2={guide.y} stroke="rgba(231,225,214,0.08)" strokeWidth="1" />
-            ))}
-
-            {vectorSegments.map((segment, index) => (
-              <line
-                key={`vector-${index}-${segment.opacity.toFixed(3)}`}
-                x1={segment.x1}
-                y1={segment.y1}
-                x2={segment.x2}
-                y2={segment.y2}
-                stroke={`rgba(231,225,214,${segment.opacity})`}
-                strokeWidth="1.1"
-                strokeLinecap="round"
-              />
-            ))}
-
-            <circle cx={cx} cy={cy} r="2.5" fill="rgba(231,225,214,0.55)" />
-            <path d={pathData} fill="rgba(231,225,214,0.035)" stroke="#e7e1d6" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
-          </svg>
-
-          <span className="overlay-label">Aperçu 2D</span>
-          <span className="overlay-values">
-            ({formatNumber(m)}, {formatNumber(n1)}, {formatNumber(n2)}, {formatNumber(n3)})
-          </span>
-          {showVectorField ? <span className="overlay-state">Champ vectoriel · {Math.round(fieldAngle)}°</span> : null}
-        </article>
-
-        <article className="copy-card">
-          <p className="eyebrow">Géométrie générative</p>
-          <h1>Visualiseur de superformule</h1>
-          <div className="description">
-            <p>
-              La superformule est une équation paramétrique capable de générer, à partir d’un petit nombre de
-              variables, une très grande diversité de contours : cercles, polygones adoucis, étoiles, pétales, formes
-              organiques ou silhouettes plus tendues. En jouant sur la fréquence, la courbure et les facteurs
-              sinus/cosinus, on fait apparaître des familles de formes qui évoluent de manière continue d’un motif à
-              l’autre.
-            </p>
-            <p>
-              J’ai conçu ce viewer pour explorer librement ces variations et repérer plus facilement les motifs de
-              superformule qui me semblent les plus intéressants. Mon objectif est ensuite d’utiliser ces formes pour
-              influencer des champs vectoriels, tester des comportements graphiques, et développer de nouveaux systèmes
-              génératifs. Plus d’informations sur la superformule :{' '}
-              <a href="https://en.wikipedia.org/wiki/Superformula" target="_blank" rel="noreferrer">
-                Wikipédia
-              </a>
-              .
-            </p>
-          </div>
-          <div className="stats-grid">
-            <div>
-              <span>Fréquence</span>
-              <strong>{formatNumber(m)}</strong>
+          <section className="controls-card">
+            <div className="main-controls">
+              <Slider label="Fréquence" value={m} min={0} max={20} step={0.1} onChange={setM} />
+              <Slider label="Courbure" value={n1} min={0} max={80} step={0.1} onChange={setN1} />
+              <Slider label="Facteur sinus" value={n2} min={0} max={80} step={0.1} onChange={setN2} />
+              <Slider label="Facteur cosinus" value={n3} min={0} max={80} step={0.1} onChange={setN3} />
             </div>
-            <div>
-              <span>Courbure</span>
-              <strong>{formatNumber(n1)}</strong>
-            </div>
-            <div>
-              <span>Facteur sinus</span>
-              <strong>{formatNumber(n2)}</strong>
-            </div>
-            <div>
-              <span>Facteur cosinus</span>
-              <strong>{formatNumber(n3)}</strong>
-            </div>
-          </div>
-        </article>
-      </section>
 
-      <section className="controls-card">
-        <div className="main-controls">
-          <Slider label="Fréquence" value={m} min={0} max={20} step={0.1} onChange={setM} />
-          <Slider label="Courbure" value={n1} min={0} max={80} step={0.1} onChange={setN1} />
-          <Slider label="Facteur sinus" value={n2} min={0} max={80} step={0.1} onChange={setN2} />
-          <Slider label="Facteur cosinus" value={n3} min={0} max={80} step={0.1} onChange={setN3} />
-        </div>
-
-        <aside className="utility-panel">
-          <p>Surcouche utilitaire</p>
-          <label className="checkbox-row" htmlFor="vectorField">
-            <span>
-              Champ vectoriel
-              <small>Afficher l’influence locale du flux</small>
-            </span>
-            <input
-              id="vectorField"
-              type="checkbox"
-              checked={showVectorField}
-              onChange={(event) => setShowVectorField(event.target.checked)}
-            />
-          </label>
-          <Slider label="Angle initial" value={fieldAngle} min={0} max={90} step={1} onChange={setFieldAngle} subdued />
-          <div className="utility-scale">
-            <span>Tangent</span>
-            <span>Perpendiculaire</span>
-          </div>
-        </aside>
-      </section>
+            <aside className="utility-panel">
+              <p>Surcouche utilitaire</p>
+              <label className="checkbox-row" htmlFor="vectorField">
+                <span>
+                  Champ vectoriel
+                  <small>Afficher l’influence locale du flux</small>
+                </span>
+                <input
+                  id="vectorField"
+                  type="checkbox"
+                  checked={showVectorField}
+                  onChange={(event) => setShowVectorField(event.target.checked)}
+                />
+              </label>
+              <Slider label="Angle initial" value={fieldAngle} min={0} max={90} step={1} onChange={setFieldAngle} subdued />
+              <div className="utility-scale">
+                <span>Tangent</span>
+                <span>Perpendiculaire</span>
+              </div>
+            </aside>
+          </section>
+        </>
+      )}
     </main>
   );
 }
